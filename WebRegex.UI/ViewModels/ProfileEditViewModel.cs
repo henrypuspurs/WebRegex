@@ -1,4 +1,5 @@
 ﻿using Caliburn.Micro;
+using System.Linq;
 using WebRegex.Core.Models;
 using WebRegex.Data;
 using WebRegex.UI.Core;
@@ -7,25 +8,20 @@ namespace WebRegex.UI.ViewModels
 {
     class ProfileEditViewModel : Screen
     {
-        private BindableCollection<Expression> _expressions;
-
-        public ProfileEditViewModel(int profileId)
+        public ProfileEditViewModel(Profile profile)
         {
-            Expressions = new DataHandling().ListToBindableCollection(new ProfileSQLData().GetExpressions(profileId, Helper.CnnVal("WebRegexDB")));
+            profile.RegexExpressions = new DataHandling().ListToBindableCollection(new ProfileSQLData().GetExpressions(profile.Id, Helper.CnnVal("WebRegexDB"))).ToList();
+            Profile = profile;
         }
+
+        public Profile Profile;
 
         public BindableCollection<Expression> Expressions
         {
             get
             {
-                return _expressions;
-            }
-            set
-            {
-                _expressions = value;
-                NotifyOfPropertyChange(() => Expressions);
+                return new DataHandling().ListToBindableCollection(Profile.RegexExpressions);
             }
         }
-
     }
 }

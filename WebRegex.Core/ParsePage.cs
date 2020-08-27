@@ -27,8 +27,15 @@ namespace WebRegex.Core
 
             foreach (var section in Profile.RegexExpressions)
             {
-                var matches = MatchCollectionToString(new Regex(section.Regex).Matches(Html));
-                results.Add(new Result(section.Name, matches) { ProfileId = Profile.Id});
+                try
+                {
+                    var matches = MatchCollectionToString(new Regex(section.Regex).Matches(Html));
+                    results.Add(new Result(section.Name, matches) { ProfileId = Profile.Id });
+                }
+                catch
+                {
+                    results.Add(new Result(section.Name, "Invalid Regex") { ProfileId = Profile.Id });
+                }
             }
 
             return results;
