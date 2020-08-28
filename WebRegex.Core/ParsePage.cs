@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Net;
-using System.Text;
+using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using WebRegex.Core.Models;
 
@@ -11,33 +9,78 @@ namespace WebRegex.Core
     public class ParsePage
     {
         public string PageUrl { get; private set; }
-        public Profile Profile { get; private set; }
         public string Html { get; set; }
 
-        public ParsePage(Profile profile, string pageUrl)
-        {
-            PageUrl = pageUrl;
-            Profile = profile;
-            Html = new WebClient().DownloadString(PageUrl);
-        }
-
-        public List<Result> ReturnResults()
+        public List<Result> GetResults(List<Expression> expressions, string body)
         {
             var results = new List<Result>();
+            foreach (var section in expressions)
+            {
+                try
+                {
+                    var matches = MatchCollectionToString(new Regex(section.Regex).Matches(body));
+                    results.Add(new Result(section.Name, matches));
+                }
+                catch
+                {
+                    results.Add(new Result(section.Name, "Invalid Regex"));
+                }
+            }
+            return results;
+        }
+        public List<Result> GetFirstResult(List<Expression> expressions, string body)
+        {
+            var results = new List<Result>();
+            foreach (var section in expressions)
+            {
+                try
+                {
+                    var match = new Regex(section.Regex).Match(body).Value;
+                    results.Add(new Result(section.Name, match));
+                }
+                catch
+                {
+                    results.Add(new Result(section.Name, "Invalid Regex"));
+                }
+            }
+            return results;
+        }
 
-            foreach (var section in Profile.RegexExpressions)
+        public List<Result> AutoGetResults(Profile profile, string url)
+        {
+            Html = new WebClient().DownloadString(url);
+            var results = new List<Result>();
+            foreach (var section in profile.RegexExpressions)
             {
                 try
                 {
                     var matches = MatchCollectionToString(new Regex(section.Regex).Matches(Html));
-                    results.Add(new Result(section.Name, matches) { ProfileId = Profile.Id });
+                    results.Add(new Result(section.Name, matches) { ProfileId = profile.Id });
                 }
                 catch
                 {
-                    results.Add(new Result(section.Name, "Invalid Regex") { ProfileId = Profile.Id });
+                    results.Add(new Result(section.Name, "Invalid Regex") { ProfileId = profile.Id });
                 }
             }
+            return results;
+        }
 
+        public List<Result> AutoGetFirstResult(Profile profile, string url)
+        {
+            Html = new WebClient().DownloadString(url);
+            var results = new List<Result>();
+            foreach (var section in profile.RegexExpressions)
+            {
+                try
+                {
+                    var match = new Regex(section.Regex).Match(Html).Value;
+                    results.Add(new Result(section.Name, match) { ProfileId = profile.Id });
+                }
+                catch
+                {
+                    results.Add(new Result(section.Name, "Invalid Regex") { ProfileId = profile.Id });
+                }
+            }
             return results;
         }
 

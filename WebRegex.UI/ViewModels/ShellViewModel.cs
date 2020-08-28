@@ -1,5 +1,6 @@
 ﻿using Caliburn.Micro;
 using System.Linq;
+using System.Net;
 using WebRegex.Core;
 using WebRegex.Core.Models;
 using WebRegex.Data;
@@ -12,6 +13,8 @@ namespace WebRegex.UI.ViewModels
         private BindableCollection<Profile> _profiles;
         private Profile _selectedProfile;
         private string _pageBody;
+        private BindableCollection<Result> _results;
+        private BindableCollection<Expression> _expressions;
 
         public ShellViewModel()
         {
@@ -33,16 +36,29 @@ namespace WebRegex.UI.ViewModels
             }
         }
 
-        public Result Result
+        public BindableCollection<Expression> Expressions
         {
-            get
+            get 
             {
-                return Result;
+                return _expressions;
             }
             set
             {
-                Result = value;
-                NotifyOfPropertyChange(() => Result);
+                _expressions = value;
+                NotifyOfPropertyChange(() => Expressions);
+            }
+        }
+
+        public BindableCollection<Result> Results
+        {
+            get
+            {
+                return _results;
+            }
+            set
+            {
+                _results = value;
+                NotifyOfPropertyChange(() => Results);
             }
         }
 
@@ -87,13 +103,13 @@ namespace WebRegex.UI.ViewModels
 
         public void LoadResults()
         {
-            var results = new DataHandling().ListToBindableCollection(new ParsePage(SelectedProfile, Url).ReturnResults());
-            ActivateItemAsync(new ResultViewModel(results));
+            var dataHandling = new DataHandling();
+            Results = dataHandling.ListToBindableCollection(new ParsePage().GetFirstResult(dataHandling.BindableCollectionToList(Expressions), PageBody));
         }
 
         public void LoadProfile()
         {
-            ActivateItemAsync(new ProfileEditViewModel(SelectedProfile));
+            Expressions = new DataHandling().ListToBindableCollection(new ProfileSQLData().GetExpressions(SelectedProfile.Id, Helper.CnnVal("WebRegexDB")));
         }
 
         public void AddExpression()
@@ -112,8 +128,7 @@ namespace WebRegex.UI.ViewModels
 
         public void LoadPage()
         {
-            var page = new ParsePage(SelectedProfile, Url);
-            PageBody = page.Html;
+            PageBody = new WebClient().DownloadString(Url);
         }
     }
 }

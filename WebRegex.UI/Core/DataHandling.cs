@@ -35,5 +35,32 @@ namespace WebRegex.UI.Core
             }
             return collection;
         }
+        public List<Profile> BindableCollectionToList(BindableCollection<Profile> objectList)
+        {
+            var collection = new List<Profile>();
+            foreach (Profile obj in objectList)
+            {
+                collection.Add(obj);
+            }
+            return collection;
+        }
+        public List<Result> BindableCollectionToList(BindableCollection<Result> objectList)
+        {
+            var collection = new List<Result>();
+            foreach (Result obj in objectList)
+            {
+                collection.Add(obj);
+            }
+            return collection;
+        }
+        public List<Expression> BindableCollectionToList(BindableCollection<Expression> objectList)
+        {
+            var collection = new List<Expression>();
+            foreach (Expression obj in objectList)
+            {
+                collection.Add(obj);
+            }
+            return collection;
+        }
     }
 }
