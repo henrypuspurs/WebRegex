@@ -1,6 +1,7 @@
 ﻿using Caliburn.Micro;
 using System.Linq;
 using System.Net;
+using System.Windows;
 using WebRegex.Core;
 using WebRegex.Core.Models;
 using WebRegex.Data;
@@ -14,11 +15,11 @@ namespace WebRegex.UI.ViewModels
         private Profile _selectedProfile;
         private string _pageBody;
         private BindableCollection<Result> _results;
-        private BindableCollection<Expression> _expressions;
+        private BindableCollection<WebRegex.Core.Models.Expression> _expressions;
 
         public ShellViewModel()
         {
-            Profiles = new DataHandling().ListToBindableCollection(new ProfileSQLData().GetProfiles(Helper.CnnVal("WebRegexDB")));
+            Profiles = new DataHandling().ListToBindableCollection(new SqlData(Helper.CnnVal("WebRegexDB")).GetProfiles());
             PageBody = "Load HTML to be run";
         }
 
@@ -36,9 +37,9 @@ namespace WebRegex.UI.ViewModels
             }
         }
 
-        public BindableCollection<Expression> Expressions
+        public BindableCollection<WebRegex.Core.Models.Expression> Expressions
         {
-            get 
+            get
             {
                 return _expressions;
             }
@@ -72,11 +73,11 @@ namespace WebRegex.UI.ViewModels
             set
             {
                 _selectedProfile = value;
-                NotifyOfPropertyChange(() => SelectedProfile);
                 if (SelectedProfile != null)
                 {
                     LoadProfile();
                 }
+                NotifyOfPropertyChange(() => SelectedProfile);
             }
         }
 
@@ -109,26 +110,46 @@ namespace WebRegex.UI.ViewModels
 
         public void LoadProfile()
         {
-            Expressions = new DataHandling().ListToBindableCollection(new ProfileSQLData().GetExpressions(SelectedProfile.Id, Helper.CnnVal("WebRegexDB")));
+            Expressions = new DataHandling().ListToBindableCollection(new SqlData(Helper.CnnVal("WebRegexDB")).GetExpressions(SelectedProfile.Id));
         }
 
         public void AddExpression()
         {
-            SelectedProfile.RegexExpressions.Add(new Expression() { Name = "New Expression", Regex = "New Regex", ProfileId = SelectedProfile.Id });
+            Expressions.Add(new WebRegex.Core.Models.Expression() { Name = "New Expression", Regex = "New Regex", ProfileId = SelectedProfile.Id });
         }
 
         public void RemoveExpression()
         {
-            if (SelectedProfile.RegexExpressions.Count > 0)
+            if (Expressions.Count > 0)
             {
-                var lastExpression = SelectedProfile.RegexExpressions.Last();
-                SelectedProfile.RegexExpressions.Remove(lastExpression);
+                var lastExpression = Expressions.LastOrDefault();
+                Expressions.Remove(lastExpression);
             }
         }
 
         public void LoadPage()
         {
             PageBody = new WebClient().DownloadString(Url);
+        }
+
+        public void SaveProfile()
+        {
+            if (SelectedProfile.Id == 0 && new SqlData(Helper.CnnVal("WebRegexDB")).GetProfiles().All(i => i.Name != SelectedProfile.Name))
+            {
+                new SqlData(Helper.CnnVal("WebRegexDB")).SaveNewProfile(SelectedProfile, new DataHandling().BindableCollectionToList(Expressions));
+                MessageBox.Show("New Profile Saved");
+            }
+            else
+            {
+                MessageBox.Show("Profile Saved");
+            }
+        }
+
+        public void DeleteProfile()
+        {
+            new SqlData(Helper.CnnVal("WebRegexDB")).DeleteProfile(SelectedProfile);
+            Profiles.Remove(SelectedProfile);
+            SelectedProfile = null;
         }
     }
 }

@@ -27,16 +27,20 @@
 
         <StackPanel Grid.Column="1" Grid.Row="1">
             <ComboBox x:Name="Profiles" MinWidth="200"
-                      SelectedItem="{Binding Path=SelectedProfile, Mode=OneWayToSource}"
+                      SelectedItem="{Binding Path=SelectedProfile}"
                       DisplayMemberPath="Name">
             </ComboBox>
             <StackPanel Orientation="Horizontal">
                 <Button x:Name="AddProfile" Content="Add Profile" Margin="0,10,0,0"/>
-                <Button x:Name="SaveProfile" Content="Save Profile" Margin="10,10,10,0"/>
+                <Button x:Name="SaveProfile" Content="Save Profile" Margin="10,10,0,0"/>
+                <Button x:Name="DeleteProfile" Content="Delete Profile" Margin="10,10,0,0"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <Button x:Name="AddExpression" Content="Add Expression" Margin="0,10,0,0"/>
                 <Button x:Name="RemoveExpression" Content="Remove Expression" Margin="10,10,10,0"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBox x:Name="SelectedProfile" Text="{Binding Path=SelectedProfile.Name}" Margin="0,10,0,0"/>
             </StackPanel>
         </StackPanel>
 
@@ -59,9 +63,11 @@
         <StackPanel Grid.Column="3" Grid.Row="1">
             <StackPanel Orientation="Horizontal">
                 <TextBox x:Name="Url" Text="Please enter a url to load" Width="300"/>
-                <Button x:Name="LoadPage" Content="Load Url"/>
+                <Button x:Name="LoadPage" Content="Load Url" Margin="10,0,0,0"/>
             </StackPanel>
-            <Button x:Name="LoadResults" Content="Run" Margin="0,10,0,0"/>
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="LoadResults" Content="Run" Margin="0,10,0,0" Width="100"/>
+            </StackPanel>
         </StackPanel>
 
         <TextBox x:Name="PageBody" Grid.Row="3" Grid.Column="3"
@@ -70,8 +76,14 @@
         <GridSplitter Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Stretch"
                       ShowsPreview="True" Grid.RowSpan="6" Width="10"/>
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Grid.Column="5" Grid.Row="1" 
-                      Grid.RowSpan="3">
+        <StackPanel Grid.Column="5" Grid.Row="1">
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="SaveResult" Content="Save Results"/>
+            </StackPanel>
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
+                      Grid.Column="5" Grid.Row="2" Grid.RowSpan="2">
             <ItemsControl x:Name="Results">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -83,6 +95,6 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
-        
+
     </Grid>
 </Window>
