@@ -1,7 +1,6 @@
 ﻿using Caliburn.Micro;
 using System.Linq;
 using System.Net;
-using System.Windows;
 using WebRegex.Core;
 using WebRegex.Core.Models;
 using WebRegex.Data;
@@ -15,11 +14,20 @@ namespace WebRegex.UI.ViewModels
         private Profile _selectedProfile;
         private string _pageBody;
         private BindableCollection<Result> _results;
-        private BindableCollection<WebRegex.Core.Models.Expression> _expressions;
+        private BindableCollection<Expression> _expressions;
+
+        public string ConnectionString
+        {
+            get
+            {
+                return Helper.CnnVal("WebRegexDB");
+            }
+        }
 
         public ShellViewModel()
         {
-            Profiles = new DataHandling().ListToBindableCollection(new SqlData(Helper.CnnVal("WebRegexDB")).GetProfiles());
+            Profiles = new DataHandling().ToBindableCollection(new SqlData(ConnectionString)
+                        .LoadData<Profile>(@"select * from dbo.Profiles"));
             PageBody = "Load HTML to be run";
         }
 
@@ -37,7 +45,7 @@ namespace WebRegex.UI.ViewModels
             }
         }
 
-        public BindableCollection<WebRegex.Core.Models.Expression> Expressions
+        public BindableCollection<Expression> Expressions
         {
             get
             {
@@ -105,17 +113,18 @@ namespace WebRegex.UI.ViewModels
         public void LoadResults()
         {
             var dataHandling = new DataHandling();
-            Results = dataHandling.ListToBindableCollection(new ParsePage().GetFirstResult(dataHandling.BindableCollectionToList(Expressions), PageBody));
+            Results = dataHandling.ToBindableCollection(new ParsePage().GetFirstResult(Expressions.ToList(), PageBody));
         }
 
         public void LoadProfile()
         {
-            Expressions = new DataHandling().ListToBindableCollection(new SqlData(Helper.CnnVal("WebRegexDB")).GetExpressions(SelectedProfile.Id));
+            Expressions = new DataHandling().ToBindableCollection(new SqlData(Helper.CnnVal("WebRegexDB"))
+                        .LoadData<Expression>(@$"select * from dbo.Expressions where ProfileId = {SelectedProfile.Id}"));
         }
 
         public void AddExpression()
         {
-            Expressions.Add(new WebRegex.Core.Models.Expression() { Name = "New Expression", Regex = "New Regex", ProfileId = SelectedProfile.Id });
+            Expressions.Add(new Expression() { Name = "New Expression", Regex = "New Regex", ProfileId = SelectedProfile.Id });
         }
 
         public void RemoveExpression()
@@ -134,22 +143,59 @@ namespace WebRegex.UI.ViewModels
 
         public void SaveProfile()
         {
-            if (SelectedProfile.Id == 0 && new SqlData(Helper.CnnVal("WebRegexDB")).GetProfiles().All(i => i.Name != SelectedProfile.Name))
+            if (SelectedProfile.Id == 0)
             {
-                new SqlData(Helper.CnnVal("WebRegexDB")).SaveNewProfile(SelectedProfile, new DataHandling().BindableCollectionToList(Expressions));
-                MessageBox.Show("New Profile Saved");
+                SaveNewProfile();
+                System.Windows.MessageBox.Show("New Profile Saved");
             }
             else
             {
-                MessageBox.Show("Profile Saved");
+                SaveExistingProfile();
+                System.Windows.MessageBox.Show("Profile Saved");
             }
         }
 
         public void DeleteProfile()
         {
-            new SqlData(Helper.CnnVal("WebRegexDB")).DeleteProfile(SelectedProfile);
+            new SqlData(Helper.CnnVal("WebRegexDB")).SaveData(@"delete from dbo.Profiles where Id = @Id; delete from dbo.Expressions where ProfileId = @Id", SelectedProfile);
             Profiles.Remove(SelectedProfile);
             SelectedProfile = null;
+        }
+
+        private void SaveNewProfile()
+        {
+            var sqlData = new SqlData(Helper.CnnVal("WebRegexDB"));
+            sqlData.SaveData(@"insert into dbo.Profiles values (@Name)", SelectedProfile);
+            var Id = sqlData.LoadData<Profile>(@$"select Id from dbo.Profiles where Name = '{SelectedProfile.Name}'").First().Id;
+            foreach (Expression expression in Expressions)
+            {
+                sqlData.SaveData(@$"insert into dbo.Expressions (ProfileId, Name, Regex) values ('{Id}', @Name, @Regex)", expression);
+            }
+        }
+
+        private void SaveExistingProfile()
+        {
+            var sqlData = new SqlData(Helper.CnnVal("WebRegexDB"));
+            sqlData.SaveData($"update dbo.Profiles set Name = @Name where Id = @Id", SelectedProfile);
+            foreach (Expression expression in Expressions)
+            {
+                if (expression.Id != 0)
+                {
+                    sqlData.SaveData($"update dbo.Expressions set Name = @Name where Id = @Id", expression);
+                    sqlData.SaveData($"update dbo.Expressions set Regex = @Regex where Id = @Id", expression);
+                }
+                else
+                {
+                    sqlData.SaveData(@$"insert into dbo.Expressions (ProfileId, Name, Regex) values ('{SelectedProfile.Id}', @Name, @Regex)", expression);
+                }
+            }
+            foreach (Expression savedexpression in sqlData.LoadData<Expression>(@$"select * from dbo.Expressions where ProfileId = '{SelectedProfile.Id}'"))
+            {
+                if (Expressions.All(n => n.Name != savedexpression.Name))
+                {
+                    sqlData.SaveData($"delete from dbo.Expressions where Id = @Id", savedexpression);
+                }
+            }
         }
     }
 }
