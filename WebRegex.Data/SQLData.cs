@@ -16,7 +16,7 @@ namespace WebRegex.Data
             ConnectionString = connectionString;
         }
 
-        public List<T> LoadData<T>(string sql)
+        public List<T> DapperQuery<T>(string sql)
         {
             using (IDbConnection connection = new SqlConnection(ConnectionString))
             {
@@ -24,7 +24,7 @@ namespace WebRegex.Data
             }
         }
 
-        public int SaveData<T>(string sql, T data)
+        public int DapperExecute<T>(string sql, T data)
         {
             using (IDbConnection connection = new SqlConnection(ConnectionString))
             {

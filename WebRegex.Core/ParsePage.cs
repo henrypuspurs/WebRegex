@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using WebRegex.Core.Models;
 
@@ -10,6 +11,12 @@ namespace WebRegex.Core
     {
         public string PageUrl { get; private set; }
         public string Html { get; set; }
+        public string Origin {get; set;}
+
+        public ParsePage(string origin)
+        {
+            Origin = origin;
+        }
 
         public List<Result> GetResults(List<Expression> expressions, string body)
         {
@@ -19,11 +26,11 @@ namespace WebRegex.Core
                 try
                 {
                     var matches = MatchCollectionToString(new Regex(section.Regex).Matches(body));
-                    results.Add(new Result(section.Name, matches));
+                    results.Add(new Result(section.Name, matches, Origin, section.ProfileId));
                 }
                 catch
                 {
-                    results.Add(new Result(section.Name, "Invalid Regex"));
+                    results.Add(new Result(section.Name, "Invalid Regex", Origin, section.ProfileId));
                 }
             }
             return results;
@@ -36,11 +43,11 @@ namespace WebRegex.Core
                 try
                 {
                     var match = new Regex(section.Regex).Match(body).Value;
-                    results.Add(new Result(section.Name, match));
+                    results.Add(new Result(section.Name, match, Origin, section.ProfileId));
                 }
                 catch
                 {
-                    results.Add(new Result(section.Name, "Invalid Regex"));
+                    results.Add(new Result(section.Name, "Invalid Regex", Origin, section.ProfileId));
                 }
             }
             return results;
@@ -55,11 +62,11 @@ namespace WebRegex.Core
                 try
                 {
                     var matches = MatchCollectionToString(new Regex(section.Regex).Matches(Html));
-                    results.Add(new Result(section.Name, matches) { ProfileId = profile.Id });
+                    results.Add(new Result(section.Name, matches, Origin, profile.Id));
                 }
                 catch
                 {
-                    results.Add(new Result(section.Name, "Invalid Regex") { ProfileId = profile.Id });
+                    results.Add(new Result(section.Name, "Invalid Regex", Origin, profile.Id));
                 }
             }
             return results;
@@ -74,11 +81,11 @@ namespace WebRegex.Core
                 try
                 {
                     var match = new Regex(section.Regex).Match(Html).Value;
-                    results.Add(new Result(section.Name, match) { ProfileId = profile.Id });
+                    results.Add(new Result(section.Name, match, Origin, profile.Id));
                 }
                 catch
                 {
-                    results.Add(new Result(section.Name, "Invalid Regex") { ProfileId = profile.Id });
+                    results.Add(new Result(section.Name, "Invalid Regex", Origin, profile.Id));
                 }
             }
             return results;
