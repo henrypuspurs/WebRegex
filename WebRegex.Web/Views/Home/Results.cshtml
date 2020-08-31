@@ -1,0 +1,54 @@
+﻿@model ResultViewModel
+
+@{
+    ViewData["Title"] = "Results";
+}
+
+<h1>Results viewer</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Name
+            </th>
+            <th>
+                Profile
+            </th>
+            <th>
+                Regex
+            </th>
+            <th>
+                Origin
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Results) 
+{
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => Model.Profiles.Where(n => n.Id == item.ProfileId).FirstOrDefault().Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Regex)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Origin)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

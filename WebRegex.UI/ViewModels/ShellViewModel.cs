@@ -29,7 +29,7 @@ namespace WebRegex.UI.ViewModels
         public ShellViewModel()
         {
             Profiles = new DataHandling().ToBindableCollection(new SqlData(ConnectionString)
-                        .DapperQuery<Profile>(@"select * from dbo.Profiles"));
+                        .SqlQuery<Profile>(@"select * from dbo.Profiles"));
             PageBody = "Load HTML to be run";
         }
 
@@ -121,7 +121,7 @@ namespace WebRegex.UI.ViewModels
         public void LoadProfile()
         {
             Expressions = new DataHandling().ToBindableCollection(new SqlData(Helper.CnnVal("WebRegexDB"))
-                        .DapperQuery<Expression>(@$"select * from dbo.Expressions where ProfileId = {SelectedProfile.Id}"));
+                        .SqlQuery<Expression>(@$"select * from dbo.Expressions where ProfileId = {SelectedProfile.Id}"));
         }
 
         public void AddExpression()
@@ -159,7 +159,7 @@ namespace WebRegex.UI.ViewModels
 
         public void DeleteProfile()
         {
-            new SqlData(Helper.CnnVal("WebRegexDB")).DapperExecute(@"delete from dbo.Profiles where Id = @Id; delete from dbo.Expressions where ProfileId = @Id", SelectedProfile);
+            new SqlData(Helper.CnnVal("WebRegexDB")).SqlExecute(@"delete from dbo.Profiles where Id = @Id; delete from dbo.Expressions where ProfileId = @Id", SelectedProfile);
             Profiles.Remove(SelectedProfile);
             SelectedProfile = null;
             Expressions.Clear();
@@ -170,42 +170,45 @@ namespace WebRegex.UI.ViewModels
             var sqlData = new SqlData(Helper.CnnVal("WebRegexDB"));
             foreach (Result result in Results)
             {
-                sqlData.DapperExecute(@$"insert into dbo.Results (ProfileId, Origin, Name, Regex) values (@ProfileId, @Origin, @Name, @Regex)", result);
+                if (result.Regex != "" && result.Regex != "Invalid Regex" && result.Regex != null)
+                {
+                    sqlData.SqlExecute(@$"insert into dbo.Results (ProfileId, Origin, Name, Regex) values (@ProfileId, @Origin, @Name, @Regex)", result);
+                }
             }
         }
 
         private void SaveNewProfile()
         {
             var sqlData = new SqlData(Helper.CnnVal("WebRegexDB"));
-            sqlData.DapperExecute(@"insert into dbo.Profiles values (@Name)", SelectedProfile);
-            var Id = sqlData.DapperQuery<Profile>(@$"select Id from dbo.Profiles where Name = '{SelectedProfile.Name}'").First().Id;
+            sqlData.SqlExecute(@"insert into dbo.Profiles values (@Name)", SelectedProfile);
+            var Id = sqlData.SqlQuery<Profile>(@$"select Id from dbo.Profiles where Name = '{SelectedProfile.Name}'").First().Id;
             foreach (Expression expression in Expressions)
             {
-                sqlData.DapperExecute(@$"insert into dbo.Expressions (ProfileId, Name, Regex) values ('{Id}', @Name, @Regex)", expression);
+                sqlData.SqlExecute(@$"insert into dbo.Expressions (ProfileId, Name, Regex) values ('{Id}', @Name, @Regex)", expression);
             }
         }
 
         private void SaveExistingProfile()
         {
             var sqlData = new SqlData(Helper.CnnVal("WebRegexDB"));
-            sqlData.DapperExecute($"update dbo.Profiles set Name = @Name where Id = @Id", SelectedProfile);
+            sqlData.SqlExecute($"update dbo.Profiles set Name = @Name where Id = @Id", SelectedProfile);
             foreach (Expression expression in Expressions)
             {
                 if (expression.Id != 0)
                 {
-                    sqlData.DapperExecute($"update dbo.Expressions set Name = @Name where Id = @Id", expression);
-                    sqlData.DapperExecute($"update dbo.Expressions set Regex = @Regex where Id = @Id", expression);
+                    sqlData.SqlExecute($"update dbo.Expressions set Name = @Name where Id = @Id", expression);
+                    sqlData.SqlExecute($"update dbo.Expressions set Regex = @Regex where Id = @Id", expression);
                 }
                 else
                 {
-                    sqlData.DapperExecute(@$"insert into dbo.Expressions (ProfileId, Name, Regex) values ('{SelectedProfile.Id}', @Name, @Regex)", expression);
+                    sqlData.SqlExecute(@$"insert into dbo.Expressions (ProfileId, Name, Regex) values ('{SelectedProfile.Id}', @Name, @Regex)", expression);
                 }
             }
-            foreach (Expression savedexpression in sqlData.DapperQuery<Expression>(@$"select * from dbo.Expressions where ProfileId = '{SelectedProfile.Id}'"))
+            foreach (Expression savedexpression in sqlData.SqlQuery<Expression>(@$"select * from dbo.Expressions where ProfileId = '{SelectedProfile.Id}'"))
             {
                 if (Expressions.Any(n => n.Name != savedexpression.Name))
                 {
-                    sqlData.DapperExecute($"delete from dbo.Expressions where Id = @Id", savedexpression);
+                    sqlData.SqlExecute($"delete from dbo.Expressions where Id = @Id", savedexpression);
                 }
             }
         }
