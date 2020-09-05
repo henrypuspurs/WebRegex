@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.NetworkInformation;
@@ -10,44 +11,46 @@ namespace WebRegex.Core
     public class ParsePage
     {
         public string PageUrl { get; private set; }
-        public string Html { get; set; }
         public string Origin { get; set; }
+        public bool IdentifierFound { get; set; }
+        public string IdentifierValue { get; set; }
 
         public ParsePage(string origin)
         {
             Origin = origin;
         }
 
-        public List<Result> GetResults(List<Expression> expressions, string body)
+        public List<Result> GetFirstResult(Profile profile, string body)
         {
             var results = new List<Result>();
-            foreach (var section in expressions)
+            foreach (Expression expression in profile.RegexExpressions)
             {
                 try
                 {
-                    var matches = MatchCollectionToString(new Regex(section.Regex).Matches(body));
-                    results.Add(new Result { Name = section.Name, Origin = Origin, ProfileId = section.ProfileId, Regex = matches });
+                    var match = new Regex(expression.Regex).Match(body).Value;
+                    AddResults(results, expression, profile, match);
                 }
                 catch
                 {
-                    results.Add(new Result { Name = section.Name, Origin = Origin, ProfileId = section.ProfileId, Regex = "Invalid Regex" });
+                    AddResults(results, expression, profile, "Invalid Regex");
                 }
             }
             return results;
         }
-        public List<Result> GetFirstResult(List<Expression> expressions, string body)
+
+        public List<Result> GetResults(Profile profile, string body)
         {
             var results = new List<Result>();
-            foreach (var section in expressions)
+            foreach (Expression expression in profile.RegexExpressions)
             {
                 try
                 {
-                    var match = new Regex(section.Regex).Match(body).Value;
-                    results.Add(new Result { Name = section.Name, Origin = Origin, ProfileId = section.ProfileId, Regex = match });
+                    var matches = MatchCollectionToString(new Regex(expression.Regex).Matches(body));
+                    AddResults(results, expression, profile, matches);
                 }
                 catch
                 {
-                    results.Add(new Result { Name = section.Name, Origin = Origin, ProfileId = section.ProfileId, Regex = "Invalid Regex" });
+                    AddResults(results, expression, profile, "Invalid Regex");
                 }
             }
             return results;
@@ -55,39 +58,27 @@ namespace WebRegex.Core
 
         public List<Result> AutoGetResults(Profile profile, string url)
         {
-            Html = new WebClient().DownloadString(url);
-            var results = new List<Result>();
-            foreach (var section in profile.RegexExpressions)
-            {
-                try
-                {
-                    var matches = MatchCollectionToString(new Regex(section.Regex).Matches(Html));
-                    results.Add(new Result { Name = section.Name, Origin = Origin, ProfileId = section.ProfileId, Regex = matches });
-                }
-                catch
-                {
-                    results.Add(new Result { Name = section.Name, Origin = Origin, ProfileId = section.ProfileId, Regex = "Invalid Regex" });
-                }
-            }
-            return results;
+            var html = new WebClient().DownloadString(url);
+            return GetResults(profile, html);
         }
 
         public List<Result> AutoGetFirstResult(Profile profile, string url)
         {
-            Html = new WebClient().DownloadString(url);
-            var results = new List<Result>();
-            foreach (var section in profile.RegexExpressions)
+            var html = new WebClient().DownloadString(url);
+            return GetFirstResult(profile, html);
+        }
+
+        private List<Result> AddResults(List<Result> results, Expression expression, Profile profile, string regex)
+        {
+            if (expression.IsIdentifier == true)
             {
-                try
+                IdentifierValue = regex;
+                foreach (Result result in results)
                 {
-                    var match = new Regex(section.Regex).Match(Html).Value;
-                    results.Add(new Result { Name = section.Name, Origin = Origin, ProfileId = section.ProfileId, Regex = match });
-                }
-                catch
-                {
-                    results.Add(new Result { Name = section.Name, Origin = Origin, ProfileId = section.ProfileId, Regex = "Invalid Regex" });
+                    result.Identifier = IdentifierValue;
                 }
             }
+            results.Add(new Result { Id = expression.Id, ProfileId = profile.Id, Origin = Origin, Regex = regex, IsIdentifier = expression.IsIdentifier, Identifier = IdentifierValue });
             return results;
         }
 

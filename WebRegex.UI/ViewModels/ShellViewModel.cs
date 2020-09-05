@@ -1,7 +1,9 @@
 ﻿using Caliburn.Micro;
+using System;
 using System.Collections;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Windows.Documents;
 using WebRegex.Core;
 using WebRegex.Core.Models;
@@ -33,7 +35,7 @@ namespace WebRegex.UI.ViewModels
             PageBody = "Load HTML to be run";
         }
 
-        public string Url { get; set; } = "None Set";
+        public string Url { get; set; }
         public string PageBody
         {
             get
@@ -109,13 +111,15 @@ namespace WebRegex.UI.ViewModels
         {
             var newProfile = new Profile() { Name = "New Profile" };
             Profiles.Add(newProfile);
-            SelectedProfile = newProfile;
+            SelectedProfile = Profiles.Where(p => p.Name == "New Profile").FirstOrDefault();
+            Expressions.Add(new Expression { Name = "New Expression", Regex = "New Regex", IsIdentifier = true });
         }
 
         public void LoadResults()
         {
             var dataHandling = new DataHandling();
-            Results = dataHandling.ToBindableCollection(new ParsePage(Url).GetFirstResult(Expressions.ToList(), PageBody));
+            SelectedProfile.RegexExpressions = Expressions.ToList();
+            Results = dataHandling.ToBindableCollection(new ParsePage(Url).GetFirstResult(SelectedProfile, PageBody));
         }
 
         public void LoadProfile()
@@ -126,7 +130,14 @@ namespace WebRegex.UI.ViewModels
 
         public void AddExpression()
         {
-            Expressions.Add(new Expression() { Name = "New Expression", Regex = "New Regex", ProfileId = SelectedProfile.Id });
+            if (SelectedProfile != null)
+            {
+                Expressions.Add(new Expression() { Name = "New Expression", Regex = "New Regex", ProfileId = SelectedProfile.Id });
+            }
+            else
+            {
+                System.Windows.MessageBox.Show("Please select or create a profile");
+            }
         }
 
         public void RemoveExpression()
@@ -138,9 +149,24 @@ namespace WebRegex.UI.ViewModels
             }
         }
 
+        public void ClearIdentifier()
+        {
+            foreach (Expression expression in Expressions)
+            {
+                expression.IsIdentifier = false;
+            }
+        }
+
         public void LoadPage()
         {
-            PageBody = new WebClient().DownloadString(Url);
+            try
+            {
+                PageBody = new WebClient().DownloadString(Url);
+            }
+            catch
+            {
+                System.Windows.MessageBox.Show("Unable to load page");
+            }
         }
 
         public void SaveProfile()
@@ -172,7 +198,7 @@ namespace WebRegex.UI.ViewModels
             {
                 if (result.Regex != "" && result.Regex != "Invalid Regex" && result.Regex != null)
                 {
-                    sqlData.SqlExecute(@$"insert into dbo.Results (ProfileId, Origin, Name, Regex) values (@ProfileId, @Origin, @Name, @Regex)", result);
+                    sqlData.SqlExecute(@$"insert into dbo.Results (ProfileId, Origin, Name, Regex, IsIdentifierBit, Identifier) values (@ProfileId, @Origin, @Name, @Regex, @IsIdentifierBit, @Identifier)", result);
                 }
             }
         }
@@ -182,9 +208,10 @@ namespace WebRegex.UI.ViewModels
             var sqlData = new SqlData(Helper.CnnVal("WebRegexDB"));
             sqlData.SqlExecute(@"insert into dbo.Profiles values (@Name)", SelectedProfile);
             var Id = sqlData.SqlQuery<Profile>(@$"select Id from dbo.Profiles where Name = '{SelectedProfile.Name}'").First().Id;
+            SelectedProfile.Id = Id;
             foreach (Expression expression in Expressions)
             {
-                sqlData.SqlExecute(@$"insert into dbo.Expressions (ProfileId, Name, Regex) values ('{Id}', @Name, @Regex)", expression);
+                sqlData.SqlExecute(@$"insert into dbo.Expressions (ProfileId, Name, Regex, IsIdentifierBit) values ('{Id}', @Name, @Regex, @IsIdentifierBit)", expression);
             }
         }
 
@@ -198,19 +225,30 @@ namespace WebRegex.UI.ViewModels
                 {
                     sqlData.SqlExecute($"update dbo.Expressions set Name = @Name where Id = @Id", expression);
                     sqlData.SqlExecute($"update dbo.Expressions set Regex = @Regex where Id = @Id", expression);
+                    sqlData.SqlExecute($"update dbo.Expressions set IsIdentifierBit = @IsIdentifierBit where Id = @Id", expression);
                 }
                 else
                 {
-                    sqlData.SqlExecute(@$"insert into dbo.Expressions (ProfileId, Name, Regex) values ('{SelectedProfile.Id}', @Name, @Regex)", expression);
+                    sqlData.SqlExecute(@$"insert into dbo.Expressions (ProfileId, Name, Regex, IsIdentifierBit) values ('{SelectedProfile.Id}', @Name, @Regex, @IsIdentifierBit)", expression);
                 }
             }
-            foreach (Expression savedexpression in sqlData.SqlQuery<Expression>(@$"select * from dbo.Expressions where ProfileId = '{SelectedProfile.Id}'"))
+            var savedExpressions = sqlData.SqlQuery<Expression>(@$"select * from dbo.Expressions where ProfileId = '{SelectedProfile.Id}'");
+            foreach (Expression expression in Expressions)
             {
-                if (Expressions.Any(n => n.Name != savedexpression.Name))
+                try
                 {
-                    sqlData.SqlExecute($"delete from dbo.Expressions where Id = @Id", savedexpression);
+                    expression.Id = savedExpressions.Where(n => n.Name == expression.Name).First().Id;
+                }
+                catch
+                {
+                    System.Windows.MessageBox.Show("Error Saving Expressions");
                 }
             }
+            foreach (Expression savedexpression in savedExpressions.Where(x => Expressions.Where(y => y.Id == x.Id).Count() == 0))
+            {
+                    sqlData.SqlExecute($"delete from dbo.Expressions where Id = @Id", savedexpression);
+            }
+            LoadProfile();
         }
     }
 }
