@@ -78,7 +78,7 @@ namespace WebRegex.Core
                     result.Identifier = IdentifierValue;
                 }
             }
-            results.Add(new Result { Id = expression.Id, ProfileId = profile.Id, Origin = Origin, Regex = regex, IsIdentifier = expression.IsIdentifier, Identifier = IdentifierValue });
+            results.Add(new Result { Id = expression.Id, ProfileId = profile.Id, Name = expression.Name, Origin = Origin, Regex = regex, IsIdentifier = expression.IsIdentifier, Identifier = IdentifierValue });
             return results;
         }
 

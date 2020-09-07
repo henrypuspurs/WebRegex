@@ -11,8 +11,27 @@ namespace WebRegex.Core.Models
         public int ProfileId { get; set; }
         public string Origin { get; set; }
         public bool IsIdentifier { get; set; }
-        public string Identifier { get; set; }
+        private string _identifier { get; set; }
         private string _regex;
+
+        public string Identifier
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(_identifier))
+                {
+                    return Origin;
+                }
+                else
+                {
+                    return _identifier;
+                }
+            }
+            set
+            {
+                _identifier = value;
+            }
+        }
 
         public string Regex 
         {

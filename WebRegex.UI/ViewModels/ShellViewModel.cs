@@ -193,14 +193,17 @@ namespace WebRegex.UI.ViewModels
 
         public void SaveResult()
         {
+            int records = 0;
             var sqlData = new SqlData(Helper.CnnVal("WebRegexDB"));
             foreach (Result result in Results)
             {
                 if (result.Regex != "" && result.Regex != "Invalid Regex" && result.Regex != null)
                 {
                     sqlData.SqlExecute(@$"insert into dbo.Results (ProfileId, Origin, Name, Regex, IsIdentifierBit, Identifier) values (@ProfileId, @Origin, @Name, @Regex, @IsIdentifierBit, @Identifier)", result);
+                    records++;
                 }
             }
+            System.Windows.MessageBox.Show($"{records} results saved.");
         }
 
         private void SaveNewProfile()

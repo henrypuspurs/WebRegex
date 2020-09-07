@@ -13,18 +13,20 @@
     <thead>
         <tr>
             <th>
-                Name
-            </th>
-            <th>
                 Profile
             </th>
             <th>
-                Regex
+                Result Set
             </th>
             <th>
-                Origin
+                Name
             </th>
-            <th></th>
+            <th>
+                Result
+            </th>
+            <th>
+                Actions
+            </th>
         </tr>
     </thead>
     <tbody>
@@ -32,16 +34,16 @@
 {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
                 @Html.DisplayFor(modelItem => Model.Profiles.Where(n => n.Id == item.ProfileId).FirstOrDefault().Name)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Regex)
+                @Html.DisplayFor(modelItem => item.Identifier)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Origin)
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Regex)
             </td>
             <td>
                 @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |

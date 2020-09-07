@@ -1,4 +1,4 @@
-﻿@model IEnumerable<WebRegex.Core.Models.Profile>
+﻿@model ProfileViewModel;
 
 @{
     ViewData["Title"] = "Profiles";
@@ -13,20 +13,16 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Id)
+                Profile Name
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Name)
+                Actions
             </th>
-            <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
+@foreach (var item in Model.Profiles) {
         <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Id)
-            </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Name)
             </td>
