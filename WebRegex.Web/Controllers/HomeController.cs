@@ -19,12 +19,15 @@ namespace WebRegex.Web.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private IConfiguration Configuration;
+        private IConfiguration _configuration;
+        private ISqlData _data;
 
-        public HomeController(ILogger<HomeController> logger, IConfiguration configuration)
+        public HomeController(ILogger<HomeController> logger, IConfiguration configuration, ISqlData data)
         {
             _logger = logger;
-            Configuration = configuration;
+            _configuration = configuration;
+            _data = data;
+            _data.GetConnectionString(_configuration.GetConnectionString("DefaultConnection"));
         }
 
         public IActionResult Index()
@@ -34,21 +37,18 @@ namespace WebRegex.Web.Controllers
 
         public IActionResult Profiles()
         {
-            var data = new SqlData(Configuration.GetConnectionString("DefaultConnection"));
-            var profiles = data.SqlQuery<Profile>(@"select Id, Name from dbo.Profiles");
+            var profiles = _data.SqlQuery<Profile>(@"select Id, Name from dbo.Profiles");
             foreach (Profile profile in profiles)
             {
-                data.SqlQuery<Expression>($"select * from dbo.Expressions where ProfileId = {profile.Id}");
+                _data.SqlQuery<Expression>($"select * from dbo.Expressions where ProfileId = {profile.Id}");
             }
             return View(new ProfileViewModel { Profiles = profiles});
         }
 
         public IActionResult Results()
         {
-            var results = new SqlData(Configuration.GetConnectionString("DefaultConnection"))
-                .SqlQuery<Result>(@"select ProfileId, Name, Regex, Origin, Identifier from dbo.Results");
-            var profiles = new SqlData(Configuration.GetConnectionString("DefaultConnection"))
-                .SqlQuery<Profile>(@"select Id, Name from dbo.Profiles");
+            var results = _data.SqlQuery<Result>(@"select ProfileId, Name, Regex, Origin, Identifier from dbo.Results");
+            var profiles = _data.SqlQuery<Profile>(@"select Id, Name from dbo.Profiles");
             return View(new ResultViewModel(results, profiles));
         }
 

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using WebRegex.Data;
 using WebRegex.Web.Data;
 
 namespace WebRegex.Web
@@ -25,6 +26,7 @@ namespace WebRegex.Web
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddSingleton<ISqlData, SqlData>();
             services.AddControllersWithViews();
             services.AddRazorPages();
         }

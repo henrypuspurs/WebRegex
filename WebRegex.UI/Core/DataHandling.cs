@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace WebRegex.UI.Core
 {
-    public class DataHandling
+    public static class DataHandling
     {
-        public BindableCollection<T> ToBindableCollection<T>(IEnumerable<T> objectList)
+        public static BindableCollection<T> ToBindableCollection<T>(IEnumerable<T> objectList)
         {
             var collection = new BindableCollection<T>();
             foreach (T obj in objectList)

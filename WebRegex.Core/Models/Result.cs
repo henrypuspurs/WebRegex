@@ -11,7 +11,7 @@ namespace WebRegex.Core.Models
         public int ProfileId { get; set; }
         public string Origin { get; set; }
         public bool IsIdentifier { get; set; }
-        private string _identifier { get; set; }
+        private string _identifier;
         private string _regex;
 
         public string Identifier

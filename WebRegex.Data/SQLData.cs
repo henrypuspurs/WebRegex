@@ -6,18 +6,18 @@ using System.Linq;
 
 namespace WebRegex.Data
 {
-    public class SqlData
+    public class SqlData : ISqlData
     {
-        private readonly string ConnectionString;
+        private string _connectionString;
 
-        public SqlData(string connectionString)
+        public void GetConnectionString(string ConnectionString)
         {
-            ConnectionString = connectionString;
+            _connectionString = ConnectionString;
         }
 
         public List<T> SqlQuery<T>(string sql)
         {
-            using (IDbConnection connection = new SqlConnection(ConnectionString))
+            using (IDbConnection connection = new SqlConnection(_connectionString))
             {
                 return connection.Query<T>(sql).ToList();
             }
@@ -25,7 +25,7 @@ namespace WebRegex.Data
 
         public int SqlExecute<T>(string sql, T data)
         {
-            using (IDbConnection connection = new SqlConnection(ConnectionString))
+            using (IDbConnection connection = new SqlConnection(_connectionString))
             {
                 return connection.Execute(sql, data);
             }
