@@ -19,8 +19,8 @@ namespace WebRegex.Web.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private IConfiguration _configuration;
-        private ISqlData _data;
+        private readonly IConfiguration _configuration;
+        private readonly ISqlData _data;
 
         public HomeController(ILogger<HomeController> logger, IConfiguration configuration, ISqlData data)
         {
